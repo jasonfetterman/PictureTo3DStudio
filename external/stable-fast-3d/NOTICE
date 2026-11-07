@@ -1,0 +1,13 @@
+﻿This Stability AI Model is licensed under the Stability AI Community License, Copyright © Stability AI Ltd. All Rights Reserved.
+
+Powered by Stability AI.
+
+Stable Fast 3D source:
+https://github.com/Stability-AI/stable-fast-3d
+
+Windows CUDA modifications made for PictureTo3DStudio:
+- texture_baker/setup.py
+- texture_baker/texture_baker/csrc/baker_kernel.cu
+
+These modifications adapt the texture baker build process and CUDA headers for the Windows development environment.
+See LICENSE.md for the applicable license terms.

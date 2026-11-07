@@ -1,0 +1,82 @@
+﻿# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# IDEs
+.vscode/
+.idea/
+
+# OS junk
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Python packaging
+build/
+dist/
+*.egg-info/
+
+# AI model weights and caches
+.cache/
+huggingface/
+**/*.safetensors
+**/*.ckpt
+**/*.pth
+**/*.pt
+**/*.onnx
+
+# Temporary files and logs
+*.log
+*.tmp
+*.bak
+*.backup*
+
+# Generated models and images
+output/
+generated/
+*.glb
+*.gltf
+*.stl
+*.obj
+*.fbx
+*.blend
+
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Nested Git repository history
+external/stable-fast-3d/.git/
+
+# Native build artifacts
+**/build/
+**/dist/
+*.obj
+*.pyd
+*.dll
+*.lib
+*.exp
+
+# Logs
+startup_log.txt
+*.log
+
+# Preserve runtime model data
+!external/stable-fast-3d/load/tets/160_tets.npz
+
+# Empty recovery artifacts
+app/main.py.empty_before_restore
+
+# Local upstream source backups
+external/stable-fast-3d/texture_baker/setup.py.before_windows_cuda
+external/stable-fast-3d/texture_baker/texture_baker/csrc/baker_kernel.cu.before_header_fix

@@ -1,0 +1,211 @@
+warning: in the working copy of 'texture_baker/setup.py', LF will be replaced by CRLF the next time Git touches it
+[1mdiff --git a/texture_baker/setup.py b/texture_baker/setup.py[m
+[1mindex d0fbf09..997817d 100644[m
+[1m--- a/texture_baker/setup.py[m
+[1m+++ b/texture_baker/setup.py[m
+[36m@@ -1,131 +1,98 @@[m
+[31m-import glob[m
+[31m-import os[m
+[31m-import platform[m
+[32m+[m[32m﻿import os[m
+[32m+[m[32mfrom pathlib import Path[m
+ [m
+ import torch[m
+ from setuptools import find_packages, setup[m
+[31m-from torch.utils.cpp_extension import ([m
+[31m-    CUDA_HOME,[m
+[31m-    BuildExtension,[m
+[31m-    CppExtension,[m
+[31m-    CUDAExtension,[m
+[31m-)[m
+[32m+[m[32mfrom torch.utils.cpp_extension import CUDA_HOME, BuildExtension, CUDAExtension[m
+ [m
+[31m-library_name = "texture_baker"[m
+[32m+[m[32mROOT = Path(__file__).resolve().parent[m
+[32m+[m[32mPACKAGE = "texture_baker"[m
+[32m+[m[32mSOURCE_DIR = ROOT / PACKAGE / "csrc"[m
+ [m
+[32m+[m[32mif os.name != "nt":[m
+[32m+[m[32m    raise RuntimeError("This build configuration is intended for Windows.")[m
+ [m
+[31m-def get_extensions():[m
+[31m-    debug_mode = os.getenv("DEBUG", "0") == "1"[m
+[31m-    use_cuda = os.getenv("USE_CUDA", "1" if torch.cuda.is_available() else "0") == "1"[m
+[31m-    use_metal = ([m
+[31m-        os.getenv("USE_METAL", "1" if torch.backends.mps.is_available() else "0") == "1"[m
+[32m+[m[32mif CUDA_HOME is None:[m
+[32m+[m[32m    raise RuntimeError([m
+[32m+[m[32m        "CUDA was explicitly requested, but PyTorch could not locate CUDA_HOME."[m
+     )[m
+[31m-    use_native_arch = os.getenv("USE_NATIVE_ARCH", "1") == "1"[m
+[31m-    if debug_mode:[m
+[31m-        print("Compiling in debug mode")[m
+ [m
+[31m-    use_cuda = use_cuda and CUDA_HOME is not None[m
+[31m-    extension = CUDAExtension if use_cuda else CppExtension[m
+[32m+[m[32mif torch.version.cuda is None:[m
+[32m+[m[32m    raise RuntimeError([m
+[32m+[m[32m        "The installed PyTorch build does not include CUDA support."[m
+[32m+[m[32m    )[m
+ [m
+[31m-    is_hip_extension = True if ((os.environ.get('ROCM_HOME') is not None) and (torch.version.hip is not None)) else False[m
+[32m+[m[32mif not torch.cuda.is_available():[m
+[32m+[m[32m    raise RuntimeError([m
+[32m+[m[32m        "PyTorch cannot access the CUDA GPU. Refusing to build a CPU-only extension."[m
+[32m+[m[32m    )[m
+ [m
+[31m-    extra_link_args = [][m
+[31m-    extra_compile_args = {[m
+[32m+[m[32mcpp_sources = sorted(str(path) for path in SOURCE_DIR.glob("*.cpp"))[m
+[32m+[m[32mcuda_sources = sorted(str(path) for path in SOURCE_DIR.glob("*.cu"))[m
+[32m+[m
+[32m+[m[32mif not cpp_sources:[m
+[32m+[m[32m    raise RuntimeError(f"No C++ sources found in {SOURCE_DIR}")[m
+[32m+[m
+[32m+[m[32mif not cuda_sources:[m
+[32m+[m[32m    raise RuntimeError(f"No CUDA sources found in {SOURCE_DIR}")[m
+[32m+[m
+[32m+[m[32msources = cpp_sources + cuda_sources[m
+[32m+[m
+[32m+[m[32mprint("\n========== TEXTURE BAKER CUDA BUILD ==========")[m
+[32m+[m[32mprint("Package:", PACKAGE)[m
+[32m+[m[32mprint("CUDA_HOME:", CUDA_HOME)[m
+[32m+[m[32mprint("PyTorch:", torch.__version__)[m
+[32m+[m[32mprint("PyTorch CUDA:", torch.version.cuda)[m
+[32m+[m[32mprint("GPU:", torch.cuda.get_device_name(0))[m
+[32m+[m[32mprint("Architecture:", os.environ.get("TORCH_CUDA_ARCH_LIST", "PyTorch default"))[m
+[32m+[m[32mprint("C++ sources:", cpp_sources)[m
+[32m+[m[32mprint("CUDA sources:", cuda_sources)[m
+[32m+[m[32mprint("CPU-only fallback: DISABLED")[m
+[32m+[m
+[32m+[m[32mextension = CUDAExtension([m
+[32m+[m[32m    name=f"{PACKAGE}._C",[m
+[32m+[m[32m    sources=sources,[m
+[32m+[m[32m    define_macros=[[m
+[32m+[m[32m        ("THRUST_IGNORE_CUB_VERSION_CHECK", None),[m
+[32m+[m[32m    ],[m
+[32m+[m[32m    extra_compile_args={[m
+         "cxx": [[m
+[31m-            "-O3" if not debug_mode else "-O0",[m
+[31m-            "-fdiagnostics-color=always",[m
+[31m-            "-fopenmp",[m
+[31m-        ][m
+[31m-        + ["-march=native"][m
+[31m-        if use_native_arch[m
+[31m-        else [],[m
+[32m+[m[32m            "/O2",[m
+[32m+[m[32m            "/std:c++17",[m
+[32m+[m[32m        ],[m
+         "nvcc": [[m
+[31m-            "-O3" if not debug_mode else "-O0",[m
+[32m+[m[32m            "-O3",[m
+[32m+[m[32m            "-std=c++17",[m
+         ],[m
+[31m-    }[m
+[31m-    if debug_mode:[m
+[31m-        extra_compile_args["cxx"].append("-g")[m
+[31m-        if platform.system() == "Windows":[m
+[31m-            extra_compile_args["cxx"].append("/Z7")[m
+[31m-            extra_compile_args["cxx"].append("/Od")[m
+[31m-            extra_link_args.extend(["/DEBUG"])[m
+[31m-        extra_compile_args["cxx"].append("-UNDEBUG")[m
+[31m-        extra_compile_args["nvcc"].append("-UNDEBUG")[m
+[31m-        extra_compile_args["nvcc"].append("-g")[m
+[31m-        extra_link_args.extend(["-O0", "-g"])[m
+[31m-[m
+[31m-    define_macros = [][m
+[31m-    extensions = [][m
+[31m-    libraries = [][m
+[31m-[m
+[31m-    this_dir = os.path.dirname(os.path.curdir)[m
+[31m-    sources = glob.glob([m
+[31m-        os.path.join(this_dir, library_name, "csrc", "**", "*.cpp"), recursive=True[m
+[31m-    )[m
+[31m-[m
+[31m-    if len(sources) == 0:[m
+[31m-        print("No source files found for extension, skipping extension compilation")[m
+[31m-        return None[m
+[31m-[m
+[31m-    if use_cuda:[m
+[31m-        define_macros += [[m
+[31m-            ("THRUST_IGNORE_CUB_VERSION_CHECK", None),[m
+[31m-        ][m
+[31m-        sources += glob.glob([m
+[31m-            os.path.join(this_dir, library_name, "csrc", "**", "*.cu"), recursive=True[m
+[31m-        )[m
+[31m-[m
+[31m-        if not is_hip_extension:[m
+[31m-            libraries += ["cudart", "c10_cuda"][m
+[31m-[m
+[31m-    if use_metal:[m
+[31m-        define_macros += [[m
+[31m-            ("WITH_MPS", None),[m
+[31m-        ][m
+[31m-        sources += glob.glob([m
+[31m-            os.path.join(this_dir, library_name, "csrc", "**", "*.mm"), recursive=True[m
+[31m-        )[m
+[31m-        extra_compile_args.update({"cxx": ["-O3", "-arch", "arm64", "-mmacosx-version-min=10.15"]})[m
+[31m-        extra_link_args += ["-arch", "arm64"][m
+[31m-[m
+[31m-    extensions.append([m
+[31m-        extension([m
+[31m-            name=f"{library_name}._C",[m
+[31m-            sources=sources,[m
+[31m-            define_macros=define_macros,[m
+[31m-            extra_compile_args=extra_compile_args,[m
+[31m-            extra_link_args=extra_link_args,[m
+[31m-            libraries=libraries[m
+[31m-            + [[m
+[31m-                "c10",[m
+[31m-                "torch",[m
+[31m-                "torch_cpu",[m
+[31m-                "torch_python",[m
+[31m-            ],[m
+[31m-        )[m
+[31m-    )[m
+[31m-[m
+[31m-    for ext in extensions:[m
+[31m-        ext.libraries = ["cudart_static" if x == "cudart" else x for x in ext.libraries][m
+[31m-[m
+[31m-    print(extensions)[m
+[31m-[m
+[31m-    return extensions[m
+[31m-[m
+[32m+[m[32m    },[m
+[32m+[m[32m    libraries=[[m
+[32m+[m[32m        "cudart",[m
+[32m+[m[32m        "c10_cuda",[m
+[32m+[m[32m        "c10",[m
+[32m+[m[32m        "torch",[m
+[32m+[m[32m        "torch_cpu",[m
+[32m+[m[32m        "torch_python",[m
+[32m+[m[32m    ],[m
+[32m+[m[32m)[m
+ [m
+ setup([m
+[31m-    name=library_name,[m
+[32m+[m[32m    name=PACKAGE,[m
+     version="0.0.1",[m
+     packages=find_packages(where="."),[m
+     package_dir={"": "."},[m
+[31m-    ext_modules=get_extensions(),[m
+[32m+[m[32m    ext_modules=[extension],[m
+     install_requires=[],[m
+     package_data={[m
+[31m-        library_name: [os.path.join("csrc", "*.h"), os.path.join("csrc", "*.metal")],[m
+[32m+[m[32m        PACKAGE: [[m
+[32m+[m[32m            os.path.join("csrc", "*.h"),[m
+[32m+[m[32m            os.path.join("csrc", "*.metal"),[m
+[32m+[m[32m        ],[m
+     },[m
+[31m-    description="Small texture baker which rasterizes barycentric coordinates to a tensor.",[m
+[31m-    long_description=open("README.md").read(),[m
+[32m+[m[32m    description="CUDA-enabled texture baker.",[m
+[32m+[m[32m    long_description=(ROOT / "README.md").read_text(encoding="utf-8"),[m
+     long_description_content_type="text/markdown",[m
+     url="https://github.com/Stability-AI/texture_baker",[m
+[31m-    cmdclass={"build_ext": BuildExtension},[m
+[32m+[m[32m    cmdclass={[m
+[32m+[m[32m        "build_ext": BuildExtension.with_options(use_ninja=False),[m
+[32m+[m[32m    },[m
+ )[m
